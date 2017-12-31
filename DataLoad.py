@@ -1,8 +1,10 @@
 import numpy as np
+np.random.seed(666)  # for reproducibility
+
 import glob
 import wfdb
 
-def fload(FileNames, WinSize, fs):
+def fload(FileNames, WinSize, fs, AllowMistakes=1):
 	"""
 	Function for reading .atr and .dat files from the physiobank databases
 	
@@ -52,18 +54,56 @@ def fload(FileNames, WinSize, fs):
 				
 			#Checking - is our annotation symbols are ok
 			for item in annotation.symbol[FirstAnn:LastAnn]:
-				if item not in "~+N/|fQ?()ptu^'`sT*D=@":
+				if item not in "~+.N/|fQ?()ptu^'`sT*D=@":
 					IsNormal -= 1
 			# If annotation symbols are ok - stack to Y 'one'
-			if IsNormal == 1:
+			
+			if IsNormal >= 1 - AllowMistakes:
 				Y = np.vstack([Y, 1])
 			else:
 				Y = np.vstack([Y, 0])
-			
+				
+			#Y = np.vstack([Y, lambda x: 1 if IsNormal >= 0 else 0])
+				
 			IsNormal = 1
 			SigStart += SigSize
-
-	#Y = annotation
+	
+	#print(annotation.symbol[:100])
 	#annotation.sample
 	#annotation.symbol
 	return X[1:,:], Y[1:,:], annotation
+
+def Shuffle(X, Y, Percent=30):
+	"""
+	Function for shuffling data  .atr and .dat files from the physiobank databases
+	
+	Input Arguments:
+		X - input dataset
+		Y - keys(classes) for input dataset
+		Percent - How much persent of input data gonna be in test set
+		
+	Output Arguments:
+		X_train - data for training 
+		X_test - data for testing
+		Y_train - keys(classes) for training
+		Y_test - keys(classes) for testing
+		
+	Example:
+	X_train, X_test, Y_train, Y_test = DataLoad.Shuffle(X, Y, Percent=30)
+	"""
+	n_all = X.shape[0]
+	n_test = int(n_all * (Percent/100))
+	
+	X_s = np.arange(n_all)
+	np.random.shuffle(X_s)
+	
+	X_tr = X_s[n_test:]
+	X_te = X_s[:n_test]
+	
+	X_train = X[X_tr,:]
+	X_test = X[X_te,:]
+	
+	Y_train = Y[X_tr,:]
+	Y_test = Y[X_te,:]
+	
+	return X_train, X_test, Y_train, Y_test 
