@@ -1,0 +1,10 @@
+*.tsv
+*.sqlite
+.DS_Store
+coverage
+lib
+node_modules
+TestData/
+__pycache__/
+ValidData/
+TrainData/
